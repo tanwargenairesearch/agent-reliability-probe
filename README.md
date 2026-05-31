@@ -1,14 +1,19 @@
 # agent-reliability-probe
 
-**How reliably do enterprise AI agents solve real business problems — not just once, but every time?**
+**How *consistently* do enterprise AI agents solve real business tasks — not just once, but every time?**
 
-Enterprise agents (CRM, support, sales, operations) get judged on *accuracy* —
-did it get it right once? Production needs *reliability* — does it get it right
-**every** time, while respecting policy and confidentiality? This is a small,
-local, provider-agnostic harness that measures that gap on real policy-bound
-business decisions, with methodology you can audit and numbers you can reproduce.
+Model scorecards measure **accuracy**: can the model do the task? That's the
+right question for comparing models. For enterprise agents that own real outcomes
+(refunds, exchanges, account changes), there's a *complementary* question
+production cares about: not "can it do this once?" but "will it do it **every**
+time?"
 
-[![ci](https://github.com/OWNER/agent-reliability-probe/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/agent-reliability-probe/actions)
+This is a small, local, provider-agnostic harness that measures both — accuracy
+(`pass@1`) and **consistency** (`pass^k`) — on real multi-turn business tasks,
+with methodology you can audit and numbers you can reproduce. It's an additive
+reliability lens, not a critique of accuracy.
+
+[![ci](https://github.com/tanwargenairesearch/agent-reliability-probe/actions/workflows/ci.yml/badge.svg)](https://github.com/tanwargenairesearch/agent-reliability-probe/actions)
 ![python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
@@ -19,13 +24,49 @@ business decisions, with methodology you can audit and numbers you can reproduce
 
 ## The one idea
 
-A **90%-accurate** agent is **not** 90% reliable. `pass@1` measures one shot;
-`pass^k` measures the chance that **all k** attempts succeed. This repo lets you
-measure that gap yourself — on your own provider and your own scenarios.
+Accuracy and reliability are two different questions. `pass@1` measures whether
+an agent succeeds *at least once*; `pass^k` measures whether it succeeds *every*
+one of k tries. Both matter — accuracy says the capability is there, reliability
+says how often you can depend on it end-to-end. This repo lets you measure both,
+yourself, on your own provider and scenarios.
 
-This isn't one benchmark's opinion. Independent evaluations — closest to real
-business problems first — reach the same conclusion: agents look acceptable on a
-single shot and fall apart on realistic, multi-turn, or repeated tasks.
+```
+accuracy    = pass@1   "succeeds at least once"
+reliability = pass^k   "succeeds every time"   ← what production depends on
+```
+
+## Results — 100 real customer-service tasks
+
+Two recent frontier models, each run as a τ-bench **retail** agent, 100 tasks ×
+5 trials, graded on the actual database end-state.
+
+![accuracy vs reliability](results/post1_chart.png)
+
+| model | accuracy (pass@1) | reliability (pass^5) | gap | flaky tasks |
+|---|---|---|---|---|
+| Model A | 0.84 (95% CI 0.78–0.90) | 0.70 (0.61–0.79) | 0.14 | 23 / 100 |
+| Model B | 0.85 (0.79–0.90) | 0.72 (0.63–0.80) | 0.13 | 23 / 100 |
+
+- **~14-point gap** between "succeeds once" and "succeeds every time" — the
+  distance between a strong demo and a dependable deployment.
+- **The two models are statistically tied** (CIs overlap) — no reliability
+  difference between them on this task set.
+- **~1 in 5 tasks are flaky** — succeed on some trials, fail on others.
+  Intermittent failure is the hardest mode to catch before it reaches a customer.
+
+Rigor note: at **20** tasks the two models looked clearly different with almost
+no gap; at **100** they were tied and the gap was clear. Measure reliability on
+enough tasks. Full method + per-task data:
+[results/retail_gemini_vs_kimi.md](results/retail_gemini_vs_kimi.md) ·
+pre-registration: [EXPERIMENT.md](EXPERIMENT.md). Database-state grading only
+(excludes communication checks); a complementary reliability view, not an
+official benchmark score.
+
+## Why this matters — the field agrees
+
+Independent evaluations — closest to real business problems first — find the same
+thing: agents look acceptable on a single shot and get less dependable on
+realistic, multi-turn, or repeated tasks.
 
 | Benchmark | Business domain | Headline result |
 |---|---|---|
