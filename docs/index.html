@@ -3,224 +3,67 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Capable isn't the same as dependable — measuring enterprise AI agent reliability</title>
-<meta name="description" content="An AI agent that's right 85% of the time can still be dependable only 71% of the time. Measuring accuracy vs reliability (pass@1 vs pass^k) on 100 real customer-service agent tasks." />
-<!-- Open Graph: makes the link preview look good when shared -->
-<meta property="og:title" content="Capable isn't the same as dependable" />
-<meta property="og:description" content="An AI agent right 85% of the time can be dependable only 71% of the time. Accuracy vs reliability on 100 real agent tasks." />
-<meta property="og:type" content="article" />
-<meta property="og:image" content="post1_chart.png" />
+<title>Enterprise Agent Reliability — a measurement series</title>
+<meta name="description" content="A series measuring how reliably enterprise AI agents handle real business tasks — not just once, but every time. Reproducible, cited, open-source." />
+<meta property="og:title" content="Enterprise Agent Reliability" />
+<meta property="og:description" content="Measuring how reliably enterprise AI agents handle real business tasks — not just once, but every time." />
+<meta property="og:type" content="website" />
 <style>
-  :root{
-    --bg:#fbf9f6; --ink:#1f2328; --soft:#5b6470; --line:#e7e2da;
-    --accent:#b5532a; --accent-soft:#f6ece5; --blue:#2f6f9f; --teal:#0d9488;
-    --card:#ffffff; --code:#f3efe9;
-    --serif: Georgia, "Times New Roman", serif;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  }
+  :root{ --ink:#241c15; --bg:#faf6f0; --card:#fff; --accent:#b8502a; --muted:#6b5d4f; --line:#e7ddd0; }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
-       line-height:1.65;font-size:18px;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:760px;margin:0 auto;padding:0 22px}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Georgia,'Times New Roman',serif;line-height:1.65}
+  .wrap{max-width:720px;margin:0 auto;padding:56px 24px 80px}
+  h1{font-size:clamp(30px,6vw,46px);line-height:1.1;letter-spacing:-.015em;margin:0 0 10px}
+  .standfirst{font-size:clamp(17px,2.5vw,21px);color:var(--muted);margin:0 0 36px}
+  .meta{font-family:-apple-system,system-ui,sans-serif;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:24px}
+  p{margin:0 0 18px}
   a{color:var(--accent);text-decoration:none}
   a:hover{text-decoration:underline}
-
-  header{padding:7vmin 0 3vmin;border-bottom:1px solid var(--line);margin-bottom:3vmin}
-  .kicker{font-family:var(--mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase;
-          color:var(--accent);margin:0 0 1.2rem}
-  h1{font-family:var(--serif);font-size:clamp(30px,5.5vw,46px);line-height:1.12;
-     letter-spacing:-.01em;margin:0 0 1rem;font-weight:700}
-  .standfirst{font-size:clamp(18px,2.4vw,22px);color:var(--soft);line-height:1.5;margin:0}
-  .byline{font-family:var(--mono);font-size:13px;color:var(--soft);margin-top:1.6rem}
-
-  h2{font-family:var(--serif);font-size:clamp(22px,3.2vw,28px);margin:2.6em 0 .6em;
-     font-weight:700;letter-spacing:-.01em}
-  h3{font-size:18px;margin:1.8em 0 .4em;font-weight:700}
-  p{margin:0 0 1.1em}
-  strong{font-weight:700}
-  em{font-style:italic}
-
-  .lede{font-size:clamp(20px,2.7vw,25px);font-family:var(--serif);line-height:1.5;
-        color:var(--ink);border-left:3px solid var(--accent);padding-left:1.1rem;margin:0 0 1.6em}
-
-  figure{margin:2em 0;text-align:center}
-  figure img{width:100%;border:1px solid var(--line);border-radius:10px;background:#fff}
-  figcaption{font-size:14px;color:var(--soft);margin-top:.7rem}
-
-  table{width:100%;border-collapse:collapse;margin:1.4em 0;font-size:16px}
-  th,td{text-align:left;padding:.7rem .8rem;border-bottom:1px solid var(--line)}
-  thead th{font-family:var(--mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--soft)}
-  tbody tr:last-child td{border-bottom:none}
-  .yes{color:var(--teal);font-weight:700}
-
-  .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.6em 0}
-  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.4rem}
-  .stat .n{font-size:clamp(34px,7vw,52px);font-weight:800;line-height:1;letter-spacing:-.02em}
-  .stat.acc .n{color:var(--blue)} .stat.rel .n{color:var(--teal)}
-  .stat .l{font-size:14px;color:var(--soft);margin-top:.5rem}
-
-  blockquote{margin:1.6em 0;padding:1rem 1.3rem;background:var(--accent-soft);
-             border-radius:0 10px 10px 0;border-left:3px solid var(--accent);
-             font-family:var(--serif);font-size:20px}
-  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;
-      padding:1rem 1.2rem;overflow:auto;font-family:var(--mono);font-size:14px;line-height:1.5}
-  code{font-family:var(--mono);font-size:.92em;background:var(--code);padding:.1em .35em;border-radius:4px}
-  pre code{background:none;padding:0}
-
-  ul.clean{list-style:none;padding:0;margin:1.1em 0}
-  ul.clean li{position:relative;padding-left:1.5em;margin:.6em 0}
-  ul.clean li::before{content:"→";position:absolute;left:0;color:var(--accent);font-weight:700}
-
-  .callout{background:var(--card);border:1px solid var(--line);border-radius:12px;
-           padding:1.3rem 1.5rem;margin:1.8em 0}
-  .callout h3{margin-top:0}
-
-  footer{border-top:1px solid var(--line);margin-top:4vmin;padding:3vmin 0 8vmin;
-         font-size:14px;color:var(--soft)}
-  .disclaimer{font-size:13px;color:var(--soft);font-style:italic}
+  .post{display:block;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:22px 24px;margin:16px 0;text-decoration:none;color:inherit;transition:border-color .15s}
+  .post:hover{border-color:var(--accent)}
+  .post .n{font-family:-apple-system,system-ui,sans-serif;font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:.08em}
+  .post h3{font-family:Georgia,serif;font-size:21px;margin:6px 0 6px;line-height:1.25}
+  .post p{font-family:-apple-system,system-ui,sans-serif;font-size:14.5px;color:var(--muted);margin:0}
+  .post.soon{opacity:.6}
+  .post.soon:hover{border-color:var(--line)}
+  .about{font-family:-apple-system,system-ui,sans-serif;font-size:14.5px;background:#f0e9df;border-radius:10px;padding:20px 24px;margin:36px 0}
+  footer{margin-top:48px;padding-top:24px;border-top:1px solid var(--line);font-family:-apple-system,system-ui,sans-serif;font-size:13px;color:var(--muted)}
 </style>
 </head>
 <body>
+<div class="wrap">
 
-<header>
-  <div class="wrap">
-    <p class="kicker">Enterprise Agent Reliability · Part 1</p>
-    <h1>Capable isn't the same as dependable</h1>
-    <p class="standfirst">An AI agent that's right 85% of the time can still be
-      dependable only 71% of the time. Both numbers are real — they just answer
-      different questions. Here's what, why, and how.</p>
-    <p class="byline">tanwargenairesearch · 2026 · ~6 min read</p>
-  </div>
-</header>
+<p class="meta">A measurement series</p>
+<h1>Enterprise Agent Reliability</h1>
+<p class="standfirst">How reliably do AI agents handle real business tasks — not just once, but every time? Each note is one finding, measured on real tasks, with open-source code and reproducible numbers.</p>
 
-<main class="wrap">
+<a class="post" href="post1.html">
+  <span class="n">Note 1</span>
+  <h3>Capable isn't the same as dependable</h3>
+  <p>Accuracy says an agent can do a task; reliability says it will, every time. The ~14-point gap, measured on 100 real customer-service tasks.</p>
+</a>
 
-  <p class="lede">Model scorecards tell you how capable a <em>model</em> is. But
-    enterprises don't deploy a model — they deploy an <em>agent</em>: at least a
-    model wrapped in tools, memory, and a workflow, and often more. The scorecard
-    measures one part; production depends on the whole system.</p>
+<a class="post" href="post2.html">
+  <span class="n">Note 2</span>
+  <h3>Most agent failures are the kind you can't reproduce</h3>
+  <p>Across 1,500 runs and two domains, ~3 in 4 failures were intermittent — right on some runs, wrong on others. The hardest failures to catch are also the most common.</p>
+</a>
 
-  <h2>The question scorecards aren't built for</h2>
+<div class="post soon">
+  <span class="n">Note 3 · coming soon</span>
+  <h3>When agents fail inconsistently, how do they break?</h3>
+  <p>Reading the failed transcripts to categorize the recurring failure modes.</p>
+</div>
 
-  <p>Accuracy asks: <strong>can the agent do the task?</strong> That's exactly the
-    right question for comparing models, and nothing here disputes it.</p>
-
-  <p>But for enterprise agents that take <strong>real actions</strong> — issuing a
-    refund, updating a record, moving money, filing a ticket, executing a workflow
-    step — there's a complementary question accuracy isn't designed to answer:
-    not <em>"can it do this once?"</em> but <em>"will it do it every time?"</em></p>
-
-  <p>In production, a task that succeeds 4 runs out of 5 isn't 80% done. It's an
-    outcome you can't yet depend on. So alongside accuracy, we must measure
-    <strong>consistency</strong>.</p>
-
-  <h2>The two numbers</h2>
-
-  <p>We took two recent frontier models, ran <strong>each as a customer-service
-    agent</strong> on 100 real tasks, and ran every task 5 times.</p>
-
-  <ul class="clean">
-    <li><strong>Accuracy</strong> = <code>pass@1</code> — succeeds at least once</li>
-    <li><strong>Reliability</strong> = <code>pass^5</code> — succeeds all five times</li>
-  </ul>
-
-  <div class="stat-row">
-    <div class="stat acc"><div class="n">~85%</div><div class="l">Accuracy — both models</div></div>
-    <div class="stat rel"><div class="n">~71%</div><div class="l">Reliability — both models</div></div>
-  </div>
-
-  <figure>
-    <img src="post1_chart.png" alt="Accuracy vs reliability for two models on 100 customer-service agent tasks" />
-    <figcaption>Accuracy (pass@1) vs reliability (pass^5) — 100 τ-bench retail
-      tasks, 5 runs each, graded on the database end-state.</figcaption>
-  </figure>
-
-  <p>Both numbers are real, and both matter. Accuracy says the capability is
-    there; reliability says how often you can count on it end-to-end. For
-    workflows where every run reaches a customer, that <strong>~14-point gap</strong>
-    is the distance between a strong demo and a dependable deployment.</p>
-
-  <h2>The dangerous failures are the intermittent ones</h2>
-
-  <p>Most of the shortfall wasn't outright failure — it was <strong>intermittent
-    failure</strong>. About <strong>1 in 5 tasks</strong> were inconsistent: the
-    agent handled them correctly on some runs and got them wrong on others, with
-    nothing changed but the run itself.</p>
-
-  <blockquote>A task that fails every time breaks in testing, so you fix it before
-    launch. An intermittent failure passes your demo and your QA, ships with your
-    confidence, then fails for a real customer on the one run that happens to
-    break. Consistent failures you find; intermittent ones find you.</blockquote>
-
-  <p>This is exactly why reliability needs its own metric. An intermittent task
-    counts as a <em>success</em> under accuracy ("succeeded at least once") but a
-    <em>failure</em> under reliability ("succeeded every time"). The gap between
-    the two numbers <em>is</em> the inconsistency.</p>
-
-  <h2>How it was measured</h2>
-
-  <ul class="clean">
-    <li><strong>Tasks:</strong> τ-bench retail (Sierra Research) — real multi-turn
-      customer-service tasks with a simulated user and a tool environment.</li>
-    <li><strong>Grading:</strong> the actual database end-state — did the order
-      really end up cancelled / exchanged / refunded correctly? No LLM judge.</li>
-    <li><strong>Scale:</strong> 100 tasks × 5 independent runs = 500 episodes per
-      model. Each model runs <em>as the agent</em>; the provider is the only thing
-      that changes.</li>
-    <li><strong>Metric:</strong> <code>pass^k</code> (τ-bench) using the unbiased
-      combinatorial estimator from the Codex paper. Reported with bootstrap 95%
-      confidence intervals.</li>
-  </ul>
-
-  <table>
-    <thead><tr><th>Model (as agent)</th><th>Accuracy (pass@1)</th><th>Reliability (pass^5)</th><th>Gap</th><th>Intermittent</th></tr></thead>
-    <tbody>
-      <tr><td>Gemini-3.5-flash (medium)</td><td>0.84 <span style="color:var(--soft)">(0.78–0.90)</span></td><td>0.70 <span style="color:var(--soft)">(0.61–0.79)</span></td><td>0.14</td><td>23 / 100</td></tr>
-      <tr><td>Kimi-K2.6</td><td>0.85 <span style="color:var(--soft)">(0.79–0.90)</span></td><td>0.72 <span style="color:var(--soft)">(0.63–0.80)</span></td><td>0.13</td><td>23 / 100</td></tr>
-    </tbody>
-  </table>
-
-  <p>The two models are <strong>statistically tied</strong> — the confidence
-    intervals overlap, so there's no reliability difference between them on this
-    task set. The story here isn't which model wins; it's the gap that both share.</p>
-
-  <div class="callout">
-    <h3>A note on rigor</h3>
-    <p>At 20 tasks, the two models looked clearly different with almost no
-      reliability gap. At 100 tasks, they were tied and the gap was clear — same
-      method, just enough samples to see it. A lesson for me as much as anyone:
-      measure reliability on enough tasks before trusting either the ranking or
-      the gap.</p>
-  </div>
-
-  <h2>What's next in this series</h2>
-  <ul class="clean">
-    <li>Systematic vs intermittent failure — which is the real production risk.</li>
-    <li>Does the model decide the outcome, or the agent design (ReAct vs skill-based) around it?</li>
-    <li>Beyond retail — does the gap hold across other business domains?</li>
-  </ul>
-
-  <h2>Reproduce it</h2>
-  <p>The harness is open-source and every number here is reproducible:</p>
-  <pre><code>pip install -e ".[providers]"
-arprobe eval --harness direct --model gemini/gemini-3.5-flash --k 5</code></pre>
-  <p>Code, methodology, citations, and per-task data:
-    <a href="https://github.com/tanwargenairesearch/agent-reliability-probe">github.com/tanwargenairesearch/agent-reliability-probe</a></p>
-
-</main>
+<div class="about">
+<strong>About this series.</strong> An independent, open-source look at agent reliability as a complementary lens to model accuracy. Tasks come from public benchmarks (τ-bench); grading is on real database end-state; every number is reproducible from the
+<a href="https://github.com/tanwargenairesearch/agent-reliability-probe">harness on GitHub</a>. Not official benchmark scores. Views my own.
+</div>
 
 <footer>
-  <div class="wrap">
-    <p class="disclaimer">Method &amp; scope: τ-bench retail, database-state
-      grading, 100 tasks × 5 trials, simulated user. A complementary reliability
-      view — not an official benchmark score. Models named for reproducibility;
-      this is about the lens, not a ranking. Views my own.</p>
-    <p><a href="https://github.com/tanwargenairesearch/agent-reliability-probe">Repository</a>
-       · <a href="https://github.com/tanwargenairesearch/agent-reliability-probe/blob/main/SOURCES.md">Sources &amp; citations</a>
-       · <a href="https://github.com/tanwargenairesearch/agent-reliability-probe/blob/main/EXPERIMENT.md">Pre-registration</a></p>
-  </div>
+Built on τ-bench (Sierra Research) · database-state grading · pass^k methodology · <a href="https://github.com/tanwargenairesearch/agent-reliability-probe">source &amp; data</a>
 </footer>
 
+</div>
 </body>
 </html>

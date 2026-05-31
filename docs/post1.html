@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Capable isn't the same as dependable — enterprise AI agent reliability</title>
+<meta name="description" content="Accuracy tells you an AI agent can do a task. Reliability tells you it will, every time. Measuring the gap on 100 real customer-service tasks." />
+<meta property="og:title" content="Capable isn't the same as dependable" />
+<meta property="og:description" content="Accuracy vs reliability for enterprise AI agents — measured on 100 real customer-service tasks." />
+<meta property="og:type" content="article" />
+<style>
+  :root{ --ink:#241c15; --bg:#faf6f0; --card:#fff; --accent:#b8502a; --muted:#6b5d4f; --line:#e7ddd0; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Georgia,'Times New Roman',serif;line-height:1.65}
+  .wrap{max-width:720px;margin:0 auto;padding:48px 24px 80px}
+  h1{font-size:clamp(28px,5vw,40px);line-height:1.15;letter-spacing:-.01em;margin:0 0 8px}
+  .standfirst{font-size:clamp(17px,2.4vw,20px);color:var(--muted);margin:0 0 32px}
+  h2{font-size:clamp(21px,3vw,26px);margin:40px 0 12px;letter-spacing:-.01em}
+  p{margin:0 0 18px}
+  img{max-width:100%;border:1px solid var(--line);border-radius:8px;margin:24px 0}
+  .meta{font-family:-apple-system,system-ui,sans-serif;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:28px}
+  .backlink{font-family:-apple-system,system-ui,sans-serif;font-size:13px;margin-bottom:28px;display:inline-block}
+  table{width:100%;border-collapse:collapse;font-family:-apple-system,system-ui,sans-serif;font-size:14px;margin:24px 0}
+  th,td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+  th{background:#f0e9df}
+  code{background:#f0e9df;padding:1px 6px;border-radius:4px;font-size:.9em}
+  blockquote{border-left:3px solid var(--accent);margin:24px 0;padding:6px 0 6px 20px;color:var(--muted);font-style:italic}
+  a{color:var(--accent)}
+  .cta{font-family:-apple-system,system-ui,sans-serif;font-size:14px;background:#f0e9df;border-radius:8px;padding:16px 20px;margin:32px 0}
+  .next{font-family:-apple-system,system-ui,sans-serif;font-size:14px;margin:32px 0}
+  footer{margin-top:48px;padding-top:24px;border-top:1px solid var(--line);font-family:-apple-system,system-ui,sans-serif;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="backlink" href="./">← Enterprise Agent Reliability</a>
+<p class="meta">Note 1</p>
+<h1>Capable isn't the same as dependable</h1>
+<p class="standfirst">Accuracy tells you an AI agent <em>can</em> do a task. Reliability tells you it <em>will</em> — every time. Here's the gap, measured on 100 real customer-service tasks.</p>
+
+<p>Model scorecards measure how capable a model is. But enterprises don't deploy a model — they deploy an <strong>agent</strong>: at least a model wrapped in tools, memory, and a workflow, and often more. The scorecard measures one part; production depends on the whole system.</p>
+
+<p>So I tested two frontier models as customer-service agents on 100 real tasks (τ-bench retail, graded on the actual database end state), running every task 5 times.</p>
+
+<p>Two numbers tell different stories:</p>
+
+<table>
+<tr><th>Measure</th><th>What it asks</th><th>Result</th></tr>
+<tr><td>Accuracy (pass@1)</td><td>Did it succeed at least once?</td><td>~85%</td></tr>
+<tr><td>Reliability (pass^5)</td><td>Did it succeed all 5 times?</td><td>~71%</td></tr>
+</table>
+
+<p>Both numbers are real. Accuracy says the capability is there. Reliability says how often you can count on it end to end. For workflows where every run reaches a customer, that ~14-point gap is the distance between a strong demo and a dependable deployment.</p>
+
+<img src="post1_chart.png" alt="Accuracy vs reliability across two models" />
+
+<p>Most of the shortfall wasn't outright failure — it was <strong>intermittent</strong> failure: tasks the agent handled correctly on some runs and got wrong on others, with nothing changed but the run itself. A task that fails every time is easy to catch — it breaks in testing. An intermittent one passes your demo, ships, then fails for a real customer on the run that happens to break.</p>
+
+<p>A note on rigor: at 20 tasks the two models looked clearly different with almost no reliability gap; at 100 they were statistically tied and the gap was clear. Measure reliability on enough tasks.</p>
+
+<h2>Why this matters</h2>
+<p>Independent benchmarks keep finding the same thing: agents look strong on a single try and stumble on realistic, multi-step, or repeated tasks. Single-shot accuracy is the right way to compare models — and an incomplete way to decide whether an agent is ready for production.</p>
+
+<p>The takeaway isn't accuracy versus reliability. It's accuracy <em>and</em> reliability. Scorecards give you the first; production demands the second.</p>
+
+<div class="cta">
+<strong>Reproduce it:</strong> the harness is open-source and every number is reproducible — <a href="https://github.com/tanwargenairesearch/agent-reliability-probe">github.com/tanwargenairesearch/agent-reliability-probe</a>
+</div>
+
+<p class="next"><strong>Next:</strong> <a href="post2.html">Most agent failures are the kind you can't reproduce →</a></p>
+
+<footer>
+Method &amp; caveats: τ-bench retail, database-state grading, 100 tasks × 5 trials, simulated user. A complementary reliability view, not an official benchmark score. Models unnamed — this is about the lens, not a ranking. Views my own.
+</footer>
+
+</div>
+</body>
+</html>
