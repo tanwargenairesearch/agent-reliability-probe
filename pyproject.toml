@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-reliability-probe"
+version = "0.1.0"
+description = "Measure how reliably enterprise AI agents solve real business problems — CRM, support, sales, ops — across providers, locally, with cited methodology."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+keywords = ["llm", "agents", "reliability", "evaluation", "pass^k", "adk", "react", "skills"]
+dependencies = []
+
+[project.optional-dependencies]
+# Provider transport (Layer 1). LiteLLM routes to OpenAI, Anthropic, Google
+# Gemini, Perplexity, Mistral, local Ollama, and more behind one interface.
+providers = ["litellm>=1.50"]
+# Agent runtime (Layer 2). Google ADK hosts the ReAct and skill-based agents;
+# non-Gemini providers are reached via ADK's LiteLlm model wrapper.
+adk = ["google-adk>=1.0", "litellm>=1.50"]
+# Real-task grounding (Phase 1b+). Also install tau2-bench from source:
+#   pip install "tau2 @ git+https://github.com/sierra-research/tau2-bench"
+tau2 = ["google-adk>=1.0", "litellm>=1.50"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+arprobe = "agent_reliability_probe.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 88
