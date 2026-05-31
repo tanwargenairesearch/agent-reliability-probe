@@ -80,11 +80,6 @@ realistic, multi-turn, or repeated tasks.
 Full citations and BibTeX: [SOURCES.md](SOURCES.md). The `pass^k` metric comes
 from τ-bench; the unbiased estimator from the Codex paper.
 
-```
-accuracy   = pass@1   "right once"
-reliability = pass^k   "right every time"   ← what production actually needs
-```
-
 ## What we measure: the agent, not the model
 
 This is **not** a model leaderboard. We measure the reliability of an **enterprise
@@ -204,15 +199,16 @@ arprobe eval --model anthropic/claude-haiku-4-5 --scenarios my_scenarios.json
 
 Schema: [data/scenarios/sample_business.json](data/scenarios/sample_business.json).
 
-## Why this framing matters
+## Why this matters in production
 
-The benchmarks above agree that single-shot accuracy isn't the blocker —
-consistency is. And it shows up in production: MIT's 2025 enterprise study found
-~95% of GenAI pilots delivered no measurable return, with the core barrier being
-systems that *"do not retain feedback, adapt to context, or improve over time."*
-S&P Global reports the share of companies abandoning most AI initiatives rose
-from 17% to 42% in a year. Measuring reliability honestly is the first step. All
-figures cited to primary sources in [SOURCES.md](SOURCES.md).
+Accuracy tells you the capability is there; reliability tells you how often you
+can depend on it. Both are first-order. The production stakes are real: MIT's 2025
+enterprise study found ~95% of GenAI pilots delivered no measurable return, with
+a core barrier being systems that *"do not retain feedback, adapt to context, or
+improve over time,"* and S&P Global reports the share of companies abandoning most
+AI initiatives rose from 17% to 42% in a year. Measuring consistency, alongside
+accuracy, is one honest step toward dependable agents. All figures cited to
+primary sources in [SOURCES.md](SOURCES.md).
 
 ## Citing
 
