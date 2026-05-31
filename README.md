@@ -44,8 +44,8 @@ Two recent frontier models, each run as a τ-bench **retail** agent, 100 tasks �
 
 | model | accuracy (pass@1) | reliability (pass^5) | gap | flaky tasks |
 |---|---|---|---|---|
-| Model A | 0.84 (95% CI 0.78–0.90) | 0.70 (0.61–0.79) | 0.14 | 23 / 100 |
-| Model B | 0.85 (0.79–0.90) | 0.72 (0.63–0.80) | 0.13 | 23 / 100 |
+| Gemini-3.5-flash (medium) | 0.84 (95% CI 0.78–0.90) | 0.70 (0.61–0.79) | 0.14 | 23 / 100 |
+| Kimi-K2.6 | 0.85 (0.79–0.90) | 0.72 (0.63–0.80) | 0.13 | 23 / 100 |
 
 - **~14-point gap** between "succeeds once" and "succeeds every time" — the
   distance between a strong demo and a dependable deployment.

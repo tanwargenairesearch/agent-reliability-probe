@@ -9,7 +9,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-models = ["Model A", "Model B"]
+models = ["Gemini-3.5-flash\n(medium thinking)", "Kimi-K2.6"]
 acc = [84.2, 84.8]   # pass@1
 rel = [70.0, 72.0]   # pass^5
 
