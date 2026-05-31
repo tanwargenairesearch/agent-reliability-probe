@@ -58,6 +58,19 @@ def main() -> None:
 
     cp = Path(a.checkpoint)
     cp.parent.mkdir(parents=True, exist_ok=True)
+
+    # lockfile: prevent two processes writing the same checkpoint (causes
+    # duplicate task rows). Released on exit.
+    lock = cp.with_suffix(cp.suffix + ".lock")
+    try:
+        lock_fd = open(lock, "x")
+    except FileExistsError:
+        print(f"ERROR: {lock} exists — another run owns {cp}. "
+              f"If stale, delete it and retry.", file=sys.stderr)
+        sys.exit(2)
+    import atexit
+    atexit.register(lambda: (lock_fd.close(), lock.unlink(missing_ok=True)))
+
     done = set()
     if cp.exists():
         for line in cp.read_text().splitlines():
