@@ -35,6 +35,8 @@ def main() -> None:
     ap.add_argument("--agent-temperature", type=float, default=None,
                     help="Force agent llm temperature (e.g. 1.0 for kimi-k2.6).")
     ap.add_argument("--checkpoint", required=True)
+    ap.add_argument("--transcripts", default=None,
+                    help="Dir to save per-trial transcripts (messages+reward) for failure-mode analysis.")
     a = ap.parse_args()
 
     from tau2.data_model.simulation import TextRunConfig
@@ -55,6 +57,37 @@ def main() -> None:
     )
     et = EvaluationType("env")
     tasks = get_tasks(a.domain, num_tasks=a.num_tasks)
+
+    tdir = Path(a.transcripts) if a.transcripts else None
+    if tdir:
+        tdir.mkdir(parents=True, exist_ok=True)
+
+    def _save_transcript(sim, tid, trial, decision):
+        if not tdir:
+            return
+        try:
+            msgs = []
+            for m in (getattr(sim, "messages", None) or []):
+                msgs.append({
+                    "role": getattr(m, "role", type(m).__name__),
+                    "content": getattr(m, "content", None),
+                    "tool_calls": [
+                        {"name": getattr(tc, "name", None), "arguments": getattr(tc, "arguments", None)}
+                        for tc in (getattr(m, "tool_calls", None) or [])
+                    ] or None,
+                })
+            ri = getattr(sim, "reward_info", None)
+            out = {
+                "task_id": tid, "trial": trial, "domain": a.domain,
+                "decision": decision,
+                "reward": getattr(ri, "reward", None),
+                "termination_reason": str(getattr(sim, "termination_reason", None)),
+                "messages": msgs,
+            }
+            (tdir / f"{a.domain}_{tid}_trial{trial}.json").write_text(
+                json.dumps(out, default=str, indent=2), encoding="utf-8")
+        except Exception as exc:  # never let capture break a run
+            print(f"[transcript-skip] {tid}/{trial}: {exc!r}", file=sys.stderr)
 
     cp = Path(a.checkpoint)
     cp.parent.mkdir(parents=True, exist_ok=True)
@@ -78,12 +111,15 @@ def main() -> None:
                 done.add(json.loads(line)["task_id"])
 
     def episode(task, trial):
+        tid = str(getattr(task, "id", task))
         for attempt in range(5):
             try:
                 sim = run_single_task(cfg, task, seed=trial, evaluation_type=et)
                 ri = getattr(sim, "reward_info", None)
                 rew = getattr(ri, "reward", None)
-                return "PASS" if (rew is not None and rew >= 1.0) else "FAIL"
+                decision = "PASS" if (rew is not None and rew >= 1.0) else "FAIL"
+                _save_transcript(sim, tid, trial, decision)
+                return decision
             except Exception as exc:
                 m = (str(exc) + type(exc).__name__).lower()
                 if "api_key" in m or "credential" in m or "authentication" in m or attempt == 4:
