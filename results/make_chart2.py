@@ -1,63 +1,94 @@
-"""Post 2 chart: three-bucket failure breakdown per dataset.
+"""Post 2 chart: zoom into the failures.
 
-Stacked bars — works-every-time (green) / inconsistent (amber) / fails-every-time
-(red) — showing that across models and domains, the inconsistent (intermittent)
-slice dominates the failures.
+The story is "of the failures, ~3 in 4 are intermittent" — but failures are a
+minority of outcomes, so a plain stacked bar buries them under green. This chart
+shows all outcomes (left), then magnifies just the failing slice (right) so the
+intermittent-dominates message actually pops.
+
+Pooled across 2 models × 2 domains (retail+airline), 150 tasks/model, k=5.
 """
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import numpy as np
+from matplotlib.patches import ConnectionPatch
 
-# (always_pass, intermittent, systematic) from the real n=100/50 runs
-data = {
-    "Retail · Model A":  (70, 23, 7),
-    "Retail · Model B":  (72, 23, 5),
-    "Airline · Model A": (29, 14, 7),
-    "Airline · Model B": (35, 11, 4),
-}
-labels = list(data.keys())
-# normalize to % so retail (100) and airline (50) compare on one axis
-def pct(t):
-    n = sum(t)
-    return [100 * x / n for x in t]
-vals = np.array([pct(data[k]) for k in labels])  # rows: dataset, cols: 3 buckets
+# pooled counts (300 task-outcomes = 150 tasks x 2 models)
+WORKS, INTER, SYST = 206, 71, 23
+TOTAL = WORKS + INTER + SYST          # 300
+FAILS = INTER + SYST                  # 94
+w_pct = 100 * WORKS / TOTAL
+i_pct_all = 100 * INTER / TOTAL
+s_pct_all = 100 * SYST / TOTAL
+i_share = 100 * INTER / FAILS         # 75.5
+s_share = 100 * SYST / FAILS          # 24.5
 
-green, amber, red = "#0d9488", "#e0a106", "#c2453b"
-fig, ax = plt.subplots(figsize=(9.5, 5.6), dpi=200)
-y = np.arange(len(labels))[::-1]  # top-to-bottom
-left = np.zeros(len(labels))
-segs = [
-    ("Works every time (5/5)", green),
-    ("Inconsistent (1–4 of 5)", amber),
-    ("Fails every time (0/5)", red),
-]
-for i, (name, color) in enumerate(segs):
-    ax.barh(y, vals[:, i], left=left, color=color, label=name, height=0.62)
-    for j, v in enumerate(vals[:, i]):
-        if v >= 5:
-            ax.text(left[j] + v / 2, y[j], f"{v:.0f}%", ha="center", va="center",
-                    color="white", fontsize=10.5, fontweight="bold")
-    left += vals[:, i]
+GREEN, AMBER, RED = "#0d9488", "#d98324", "#c2453b"
+INK, SOFT = "#1f2328", "#5b6470"
+plt.rcParams["font.family"] = "DejaVu Sans"
 
-ax.set_yticks(y)
-ax.set_yticklabels(labels, fontsize=11)
-ax.set_xlim(0, 100)
-ax.set_xlabel("Share of tasks (%)", fontsize=10)
-ax.set_title("How agents fail: most failures are inconsistent, not repeatable",
-             fontsize=14, fontweight="bold", pad=30)
-ax.text(0, 1.04, "150 tasks × 5 runs each · two frontier models · retail + airline · "
-        "amber = the failures a single run can't see",
-        transform=ax.transAxes, fontsize=9.5, color="#555")
-ax.legend(loc="lower center", bbox_to_anchor=(0.5, -0.22), ncol=3, frameon=False, fontsize=9.5)
-ax.spines[["top", "right", "left"]].set_visible(False)
-ax.tick_params(left=False)
-ax.set_axisbelow(True)
-fig.text(0.5, -0.02,
-         "τ-bench retail + airline · database-state grading · pass^5 method · "
-         "a complementary reliability view, not an official benchmark score · views my own",
-         ha="center", fontsize=7.5, color="#999")
-fig.tight_layout()
+fig, (axL, axR) = plt.subplots(1, 2, figsize=(11, 6.2), dpi=200,
+                               gridspec_kw={"width_ratios": [1, 1], "wspace": 0.45})
+fig.patch.set_facecolor("white")
+
+# ---- LEFT: all outcomes (one tall stacked bar) ----
+xL = 0.0
+bw = 0.5
+axL.bar(xL, w_pct, bw, color=GREEN)
+axL.bar(xL, i_pct_all, bw, bottom=w_pct, color=AMBER)
+axL.bar(xL, s_pct_all, bw, bottom=w_pct + i_pct_all, color=RED)
+axL.text(xL, w_pct / 2, f"Works every time\n{WORKS} of {TOTAL}\n({w_pct:.0f}%)",
+         ha="center", va="center", color="white", fontsize=11, fontweight="bold")
+axL.text(xL + bw/2 + 0.04, w_pct + (i_pct_all + s_pct_all) / 2,
+         f"{FAILS} failed\non ≥1 run", ha="left", va="center", color=INK, fontsize=10.5)
+axL.set_xlim(-0.55, 0.7)
+axL.set_ylim(0, 100)
+axL.set_title("Every outcome", fontsize=12.5, fontweight="bold", color=INK, pad=8)
+axL.set_ylabel("Share of task-outcomes (%)", fontsize=10, color=SOFT)
+axL.set_xticks([])
+for s in ("top", "right", "bottom"):
+    axL.spines[s].set_visible(False)
+axL.tick_params(colors=SOFT)
+
+# ---- RIGHT: zoom into just the failures (wide bar so labels fit) ----
+xR = 0.0
+bwR = 1.25
+axR.bar(xR, i_share, bwR, color=AMBER)
+axR.bar(xR, s_share, bwR, bottom=i_share, color=RED)
+axR.text(xR, i_share / 2 + 6, f"{i_share:.0f}%", ha="center", va="center",
+         color="white", fontsize=30, fontweight="bold")
+axR.text(xR, i_share / 2 - 11, "INTERMITTENT", ha="center", va="center",
+         color="white", fontsize=13, fontweight="bold")
+axR.text(xR, i_share / 2 - 17, "right sometimes, wrong other times",
+         ha="center", va="center", color="white", fontsize=9.5)
+axR.text(xR, i_share + s_share / 2, f"Always fails · {s_share:.0f}%",
+         ha="center", va="center", color="white", fontsize=11, fontweight="bold")
+axR.set_xlim(-0.9, 0.9)
+axR.set_ylim(0, 100)
+axR.set_title("Just the failures, magnified", fontsize=12.5, fontweight="bold", color=INK, pad=8)
+axR.set_xticks([])
+axR.set_yticks([])
+for s in ("top", "right", "bottom", "left"):
+    axR.spines[s].set_visible(False)
+
+# ---- zoom connector lines: top & bottom of the LEFT failing slice -> right bar edges ----
+for yL, yR in [(w_pct, 0), (100, 100)]:
+    con = ConnectionPatch(xyA=(xL + bw/2, yL), coordsA=axL.transData,
+                          xyB=(xR - bwR/2, yR), coordsB=axR.transData,
+                          color="#cbd2d9", lw=1.2, linestyle=(0, (4, 3)))
+    fig.add_artist(con)
+
+# ---- titles ----
+fig.suptitle("3 of every 4 agent failures are the kind a single test can't see",
+             fontsize=16.5, fontweight="bold", color=INK, x=0.5, y=1.0)
+fig.text(0.5, 0.935,
+         "Each task run 5 times. A failure that happens every time, you catch in QA. "
+         "An intermittent one ships — then breaks for a real customer.",
+         ha="center", fontsize=10.5, color=SOFT)
+fig.text(0.5, -0.01,
+         "1,500 runs · 2 frontier models × retail + airline (τ-bench) · database-state grading · "
+         "pass^k method · complementary reliability view, not an official benchmark score · views my own",
+         ha="center", fontsize=7.6, color="#9aa3ad")
+
 fig.savefig("results/post2_chart.png", bbox_inches="tight", facecolor="white")
 print("wrote results/post2_chart.png")
