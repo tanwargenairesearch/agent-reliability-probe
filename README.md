@@ -44,7 +44,7 @@ Two recent frontier models, each run as a τ-bench **retail** agent, 100 tasks �
 
 | model | accuracy (pass@1) | reliability (pass^5) | gap | flaky tasks |
 |---|---|---|---|---|
-| Gemini-3.5-flash (medium) | 0.84 (95% CI 0.78–0.90) | 0.70 (0.61–0.79) | 0.14 | 23 / 100 |
+| Gemini-3.5-flash | 0.84 (95% CI 0.78–0.90) | 0.70 (0.61–0.79) | 0.14 | 23 / 100 |
 | Kimi-K2.6 | 0.85 (0.79–0.90) | 0.72 (0.63–0.80) | 0.13 | 23 / 100 |
 
 - **~14-point gap** between "succeeds once" and "succeeds every time" — the
@@ -61,6 +61,26 @@ enough tasks. Full method + per-task data:
 pre-registration: [EXPERIMENT.md](EXPERIMENT.md). Database-state grading only
 (excludes communication checks); a complementary reliability view, not an
 official benchmark score.
+
+### How agents fail: intermittent vs systematic
+
+Sorting every task by how many of its 5 runs passed — across both models and two
+domains (retail + airline, 1,500 runs total) — shows the failures are mostly
+*inconsistent*, not repeatable.
+
+![how agents fail](results/post2_chart.png)
+
+| dataset | works every time (5/5) | inconsistent (1–4/5) | fails every time (0/5) |
+|---|---|---|---|
+| retail · Gemini-3.5-flash | 70 | 23 | 7 |
+| retail · Kimi-K2.6 | 72 | 23 | 5 |
+| airline · Gemini-3.5-flash | 29 | 14 | 7 |
+| airline · Kimi-K2.6 | 35 | 11 | 4 |
+| **pooled** | **206** | **71** | **23** |
+
+**~3 in 4 failures are inconsistent** (71 of 94 imperfect tasks) — the failure
+mode a single test run can't see. Full write-up:
+[the series →](https://tanwargenairesearch.github.io/agent-reliability-probe/)
 
 ## Why this matters — the field agrees
 
