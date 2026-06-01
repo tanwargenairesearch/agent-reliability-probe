@@ -12,3 +12,11 @@ runs/
 results/*draft*
 *.log
 *_result.json
+
+# Guard: never commit LinkedIn drafts / content strategy to the PUBLIC repo.
+# (These live in the private app-level-RL workspace.)
+*linkedin*
+*_draft*
+*_draft.md
+pitch_deck*
+content_roadmap*
