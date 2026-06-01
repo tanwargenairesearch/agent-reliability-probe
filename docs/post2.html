@@ -8,78 +8,212 @@
 <meta property="og:title" content="Most agent failures are the kind you can't reproduce" />
 <meta property="og:description" content="Across 1,500 runs on real business tasks, ~3 in 4 agent failures were intermittent, not repeatable." />
 <meta property="og:type" content="article" />
+<meta property="og:image" content="post2_chart.png" />
 <style>
-  :root{ --ink:#241c15; --bg:#faf6f0; --card:#fff; --accent:#b8502a; --muted:#6b5d4f; --line:#e7ddd0; }
+  :root{
+    --bg:#fbf9f6; --ink:#1f2328; --soft:#5b6470; --line:#e7e2da;
+    --accent:#b5532a; --accent-soft:#f6ece5; --blue:#2f6f9f; --teal:#0d9488; --amber:#e0a106; --red:#c2453b;
+    --card:#ffffff; --code:#f3efe9;
+    --serif: Georgia, "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:Georgia,'Times New Roman',serif;line-height:1.65}
-  .wrap{max-width:720px;margin:0 auto;padding:48px 24px 80px}
-  h1{font-size:clamp(28px,5vw,40px);line-height:1.15;letter-spacing:-.01em;margin:0 0 8px}
-  .standfirst{font-size:clamp(17px,2.4vw,20px);color:var(--muted);margin:0 0 32px}
-  h2{font-size:clamp(21px,3vw,26px);margin:40px 0 12px;letter-spacing:-.01em}
-  p{margin:0 0 18px}
-  img{max-width:100%;border:1px solid var(--line);border-radius:8px;margin:24px 0}
-  .meta{font-family:-apple-system,system-ui,sans-serif;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:28px}
-  .backlink{font-family:-apple-system,system-ui,sans-serif;font-size:13px;margin-bottom:28px;display:inline-block}
-  ul{margin:0 0 18px;padding-left:0;list-style:none}
-  li{margin:0 0 10px;padding-left:4px}
-  table{width:100%;border-collapse:collapse;font-family:-apple-system,system-ui,sans-serif;font-size:14px;margin:24px 0}
-  th,td{border:1px solid var(--line);padding:8px 12px;text-align:left}
-  th{background:#f0e9df}
-  code{background:#f0e9df;padding:1px 6px;border-radius:4px;font-size:.9em}
-  blockquote{border-left:3px solid var(--accent);margin:24px 0;padding:6px 0 6px 20px;color:var(--muted);font-style:italic}
-  a{color:var(--accent)}
-  .cta{font-family:-apple-system,system-ui,sans-serif;font-size:14px;background:#f0e9df;border-radius:8px;padding:16px 20px;margin:32px 0}
-  .next{font-family:-apple-system,system-ui,sans-serif;font-size:14px;margin:32px 0}
-  footer{margin-top:48px;padding-top:24px;border-top:1px solid var(--line);font-family:-apple-system,system-ui,sans-serif;font-size:13px;color:var(--muted)}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+       line-height:1.65;font-size:18px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:760px;margin:0 auto;padding:0 22px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  header{padding:7vmin 0 3vmin;border-bottom:1px solid var(--line);margin-bottom:3vmin}
+  .kicker{font-family:var(--mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 1.2rem}
+  h1{font-family:var(--serif);font-size:clamp(30px,5.5vw,46px);line-height:1.12;letter-spacing:-.01em;margin:0 0 1rem;font-weight:700}
+  .standfirst{font-size:clamp(18px,2.4vw,22px);color:var(--soft);line-height:1.5;margin:0}
+  .byline{font-family:var(--mono);font-size:13px;color:var(--soft);margin-top:1.6rem}
+  h2{font-family:var(--serif);font-size:clamp(22px,3.2vw,28px);margin:2.6em 0 .6em;font-weight:700;letter-spacing:-.01em}
+  h3{font-size:18px;margin:1.8em 0 .4em;font-weight:700}
+  p{margin:0 0 1.1em}
+  strong{font-weight:700} em{font-style:italic}
+  .lede{font-size:clamp(20px,2.7vw,25px);font-family:var(--serif);line-height:1.5;color:var(--ink);border-left:3px solid var(--accent);padding-left:1.1rem;margin:0 0 1.6em}
+  figure{margin:2em 0;text-align:center}
+  figure img{width:100%;border:1px solid var(--line);border-radius:10px;background:#fff}
+  figcaption{font-size:14px;color:var(--soft);margin-top:.7rem}
+  table{width:100%;border-collapse:collapse;margin:1.4em 0;font-size:16px}
+  th,td{text-align:left;padding:.7rem .8rem;border-bottom:1px solid var(--line)}
+  thead th{font-family:var(--mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--soft)}
+  tbody tr:last-child td{border-bottom:none}
+  .stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin:1.6em 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.3rem}
+  .stat .n{font-size:clamp(30px,6vw,46px);font-weight:800;line-height:1;letter-spacing:-.02em}
+  .stat.ok .n{color:var(--teal)} .stat.warn .n{color:var(--amber)} .stat.bad .n{color:var(--red)}
+  .stat .l{font-size:13px;color:var(--soft);margin-top:.5rem}
+  blockquote{margin:1.6em 0;padding:1rem 1.3rem;background:var(--accent-soft);border-radius:0 10px 10px 0;border-left:3px solid var(--accent);font-family:var(--serif);font-size:20px}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:1rem 1.2rem;overflow:auto;font-family:var(--mono);font-size:14px;line-height:1.5}
+  code{font-family:var(--mono);font-size:.92em;background:var(--code);padding:.1em .35em;border-radius:4px}
+  pre code{background:none;padding:0}
+  ul.clean{list-style:none;padding:0;margin:1.1em 0}
+  ul.clean li{position:relative;padding-left:1.5em;margin:.6em 0}
+  ul.clean li::before{content:"→";position:absolute;left:0;color:var(--accent);font-weight:700}
+  ul.buckets{list-style:none;padding:0;margin:1.1em 0}
+  ul.buckets li{margin:.5em 0;font-size:17px}
+  .callout{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.3rem 1.5rem;margin:1.8em 0}
+  .callout h3{margin-top:0}
+  footer{border-top:1px solid var(--line);margin-top:4vmin;padding:3vmin 0 8vmin;font-size:14px;color:var(--soft)}
+  .disclaimer{font-size:13px;color:var(--soft);font-style:italic}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-<a class="backlink" href="./">← Enterprise Agent Reliability</a>
-<p class="meta">Note 2</p>
-<h1>Most agent failures are the kind you can't reproduce</h1>
-<p class="standfirst">We've made peace with flaky software <em>tests</em>. We haven't reckoned with flaky <em>agents</em> — where the nondeterminism is the model itself, on every decision.</p>
+<header>
+  <div class="wrap">
+    <p class="kicker"><a href="./" style="color:inherit">← Enterprise Agent Reliability</a> · Note 2</p>
+    <h1>Most agent failures are the kind you can't reproduce</h1>
+    <p class="standfirst">We've made peace with flaky software <em>tests</em>. We
+      haven't reckoned with flaky <em>agents</em> — where the nondeterminism is the
+      model itself, on every decision.</p>
+    <p class="byline">tanwargenairesearch · 2026 · ~6 min read</p>
+  </div>
+</header>
 
-<p>We've lived with flaky tests for years — the ones that pass, then fail, then pass again. We learned to expect that from race conditions and networks. But an agent's nondeterminism is different: the model samples, so the same prompt can take a different reasoning path on every run. A task isn't simply "solved" or "broken" — it's solved <em>with a probability</em>.</p>
+<main class="wrap">
 
-<p>To see how this plays out, I ran two frontier models as customer-service agents across 150 tasks (100 retail, 50 airline), 5 runs each — 1,500 runs in total — and sorted every task into three buckets:</p>
+  <p class="lede">We expect software to fail deterministically: same input, same
+    failure, every time — so you catch it in testing. Agents don't play by that
+    rule, and the data shows why it matters.</p>
 
-<ul>
-<li>✅ <strong>Works every time</strong> (5 of 5)</li>
-<li>⚠️ <strong>Inconsistent</strong> — passes some runs, fails others (1–4 of 5)</li>
-<li>❌ <strong>Fails every time</strong> (0 of 5)</li>
-</ul>
+  <h2>Agents fail with a probability, not a verdict</h2>
 
-<img src="post2_chart.png" alt="Three-bucket failure breakdown per model and domain — the inconsistent (amber) slice dominates the failures" />
+  <p>We've lived with flaky <em>tests</em> for years — the ones that pass, then
+    fail, then pass again. We learned to expect that from race conditions and
+    flaky networks. An agent's nondeterminism is different in kind: the model
+    <strong>samples</strong>, so the same prompt can take a different reasoning
+    path on every run. A task isn't simply "solved" or "broken" — it's solved
+    <em>with a probability</em>.</p>
 
-<p>Of the tasks that ever failed, <strong>71 were inconsistent and only 23 failed every time</strong>. The pattern held across both models and both domains: roughly <strong>3 in 4 failures were the inconsistent kind</strong>.</p>
+  <p>That probability is invisible to the way we usually test. Run a task once,
+    see it succeed, call it done — and you've measured a coin flip by flipping it
+    a single time.</p>
 
-<table>
-<tr><th>Dataset</th><th>Works every time</th><th>Inconsistent</th><th>Fails every time</th></tr>
-<tr><td>Retail · Model A</td><td>70</td><td>23</td><td>7</td></tr>
-<tr><td>Retail · Model B</td><td>72</td><td>23</td><td>5</td></tr>
-<tr><td>Airline · Model A</td><td>29</td><td>14</td><td>7</td></tr>
-<tr><td>Airline · Model B</td><td>35</td><td>11</td><td>4</td></tr>
-</table>
+  <h2>Three buckets, 1,500 runs</h2>
 
-<h2>Why the inconsistent kind is the dangerous one</h2>
-<p>A failure that happens every time is the friendly one. It breaks in your demo, it breaks in QA — you see it, you fix it before launch.</p>
+  <p>To see the shape of it, I ran two frontier models as customer-service agents
+    across <strong>150 tasks</strong> (100 retail, 50 airline), <strong>5 runs
+    each</strong> — 1,500 runs in total — and sorted every task into three
+    buckets:</p>
 
-<p>An inconsistent failure is the trap. It passes your demo. It passes QA. You ship with confidence. Then it fails for a real customer on the one run that happens to break — and when you go to reproduce it, it works fine. The failures that are hardest to catch are also the most common.</p>
+  <ul class="buckets">
+    <li>✅ <strong>Works every time</strong> — passed all 5 of 5</li>
+    <li>⚠️ <strong>Inconsistent</strong> — passed some runs, failed others (1–4 of 5)</li>
+    <li>❌ <strong>Fails every time</strong> — failed all 5 of 5</li>
+  </ul>
 
-<p>This is exactly why a single test run — the basis of most accuracy numbers — misses the real risk. The cheapest defense is the most ignored: run your eval set <code>k</code> times, not once, and track how often it succeeds <em>every</em> time.</p>
+  <figure>
+    <img src="post2_chart.png" alt="Three-bucket failure breakdown per model and domain; the inconsistent (amber) slice dominates the failures" />
+    <figcaption>Each agent, each domain. The amber band — inconsistent tasks — is
+      the failure a single test run can't see.</figcaption>
+  </figure>
 
-<div class="cta">
-<strong>Reproduce it:</strong> the harness, the data, and the method are open-source — <a href="https://github.com/tanwargenairesearch/agent-reliability-probe">github.com/tanwargenairesearch/agent-reliability-probe</a>
-</div>
+  <h2>Three in four failures are the inconsistent kind</h2>
 
-<p class="next">← <a href="post1.html">Note 1: Capable isn't the same as dependable</a> · <em>Next: when agents fail inconsistently, how do they break?</em></p>
+  <p>Look only at the tasks that ever failed. Across both models and both domains,
+    <strong>71 were inconsistent and only 23 failed every time</strong> — roughly
+    <strong>3 in 4 failures were inconsistent</strong>, not repeatable. The
+    pattern is stable across every cell:</p>
+
+  <div class="stat-row">
+    <div class="stat ok"><div class="n">~70%</div><div class="l">Works every time (5/5)</div></div>
+    <div class="stat warn"><div class="n">~21%</div><div class="l">Inconsistent (1–4 of 5)</div></div>
+    <div class="stat bad"><div class="n">~6%</div><div class="l">Fails every time (0/5)</div></div>
+  </div>
+
+  <table>
+    <thead><tr><th>Dataset (model as agent)</th><th>Works every time</th><th>Inconsistent</th><th>Fails every time</th></tr></thead>
+    <tbody>
+      <tr><td>Retail · Model A</td><td>70</td><td>23</td><td>7</td></tr>
+      <tr><td>Retail · Model B</td><td>72</td><td>23</td><td>5</td></tr>
+      <tr><td>Airline · Model A</td><td>29</td><td>14</td><td>7</td></tr>
+      <tr><td>Airline · Model B</td><td>35</td><td>11</td><td>4</td></tr>
+      <tr><td><strong>Pooled</strong></td><td><strong>206</strong></td><td><strong>71</strong></td><td><strong>23</strong></td></tr>
+    </tbody>
+  </table>
+
+  <p>Two models, two domains, and the inconsistent slice is the larger share of
+    failures every time. This isn't a quirk of one model or one task set.</p>
+
+  <h2>Why inconsistent is the dangerous kind</h2>
+
+  <p>A failure that happens every time is the friendly one. It breaks in your demo,
+    it breaks in QA — you see it, you fix it before launch.</p>
+
+  <blockquote>An inconsistent failure passes your demo. It passes QA. You ship
+    with confidence. Then it fails for a real customer on the one run that happens
+    to break — and when you go to reproduce it, it works fine.</blockquote>
+
+  <p>The failures that are hardest to catch are also the most common. That is the
+    uncomfortable core of agent reliability: the dominant failure mode is exactly
+    the one a single test run is blind to.</p>
+
+  <h2>The cheapest defense is the most ignored</h2>
+
+  <p>You can't see inconsistency by running a task once. You see it by running the
+    same task many times and asking a stricter question: did it work
+    <em>every</em> time? That's the difference between
+    <code>pass@1</code> (succeeded at least once) and <code>pass^k</code>
+    (succeeded all k times) — and the gap between them <em>is</em> the
+    inconsistency.</p>
+
+  <p>Practically: run your eval set <code>k</code> times, not once, and track the
+    rate at which it passes every time. It costs k× the eval budget and surfaces
+    the risk that would otherwise reach a customer first.</p>
+
+  <h2>How it was measured</h2>
+
+  <ul class="clean">
+    <li><strong>Tasks:</strong> τ-bench retail + airline (Sierra Research) — real
+      multi-turn tasks with a simulated user and a tool environment.</li>
+    <li><strong>Grading:</strong> the actual database end-state — did the order /
+      booking really end up in the correct state. No LLM judge, so no judge
+      variance in the signal.</li>
+    <li><strong>Scale:</strong> 150 tasks × 5 runs × 2 models = 1,500 episodes.
+      Each model runs <em>as the agent</em>; only the provider changes.</li>
+    <li><strong>Definitions:</strong> "inconsistent" = passed on at least one run
+      and failed on at least one. "Fails every time" = 0 of 5.</li>
+  </ul>
+
+  <div class="callout">
+    <h3>Honest caveats</h3>
+    <p>Airline is 50 tasks per model, so its per-cell counts are smaller and
+      noisier than retail's 100. The robust claim is the <em>proportion</em> —
+      inconsistent failures dominate in every cell (67–82%) — not the precise
+      per-model splits. This is database-state grading only (it doesn't judge
+      communication quality), and a complementary reliability view, not an
+      official benchmark score.</p>
+  </div>
+
+  <h2>Reproduce it</h2>
+  <p>The harness, the data, and the method are open-source:</p>
+  <pre><code>pip install -e ".[providers]"
+arprobe eval --harness direct --model gemini/gemini-3.5-flash --k 5</code></pre>
+  <p>Code, methodology, citations, and per-task data:
+    <a href="https://github.com/tanwargenairesearch/agent-reliability-probe">github.com/tanwargenairesearch/agent-reliability-probe</a></p>
+
+  <p style="margin-top:2.4em;font-size:18px">←
+    <a href="post1.html">Note 1: Capable isn't the same as dependable</a>
+    &nbsp;·&nbsp; <em>Next: when agents fail inconsistently, how do they break?</em></p>
+
+</main>
 
 <footer>
-Method &amp; caveats: τ-bench retail + airline, database-state grading, 150 tasks × 5 trials per model, simulated user. "Inconsistent" = passed on at least one run and failed on at least one. A complementary reliability view, not an official benchmark score. Models unnamed — this is about the pattern, not a ranking. Views my own.
+  <div class="wrap">
+    <p class="disclaimer">Method &amp; scope: τ-bench retail + airline,
+      database-state grading, 150 tasks × 5 trials per model, simulated user. A
+      complementary reliability view — not an official benchmark score. Models
+      unnamed here — about the pattern, not a ranking; named in the repository.
+      Views my own.</p>
+    <p><a href="https://github.com/tanwargenairesearch/agent-reliability-probe">Repository</a>
+       · <a href="https://github.com/tanwargenairesearch/agent-reliability-probe/blob/main/SOURCES.md">Sources &amp; citations</a>
+       · <a href="https://github.com/tanwargenairesearch/agent-reliability-probe/blob/main/EXPERIMENT.md">Pre-registration</a></p>
+  </div>
 </footer>
 
-</div>
 </body>
 </html>
