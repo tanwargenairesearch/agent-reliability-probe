@@ -37,6 +37,8 @@ def main() -> None:
     ap.add_argument("--checkpoint", required=True)
     ap.add_argument("--transcripts", default=None,
                     help="Dir to save per-trial transcripts (messages+reward) for failure-mode analysis.")
+    ap.add_argument("--task-ids", default=None,
+                    help="Comma-separated task ids to run (default: first --num-tasks).")
     a = ap.parse_args()
 
     from tau2.data_model.simulation import TextRunConfig
@@ -56,7 +58,11 @@ def main() -> None:
         log_level="ERROR", max_concurrency=1, hallucination_retries=0, **extra,
     )
     et = EvaluationType("env")
-    tasks = get_tasks(a.domain, num_tasks=a.num_tasks)
+    if a.task_ids:
+        ids = [t.strip() for t in a.task_ids.split(",") if t.strip()]
+        tasks = get_tasks(a.domain, task_ids=ids)
+    else:
+        tasks = get_tasks(a.domain, num_tasks=a.num_tasks)
 
     tdir = Path(a.transcripts) if a.transcripts else None
     if tdir:

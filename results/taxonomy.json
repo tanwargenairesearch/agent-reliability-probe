@@ -1,0 +1,20 @@
+{
+  "pooled": {
+    "Acted with wrong arguments/values": 45,
+    "Escalated to human without completing": 30,
+    "Stalled \u2014 never executed the action": 26,
+    "Lost the thread / looped (hit step cap)": 21
+  },
+  "retail_gemini": {
+    "Acted with wrong arguments/values": 24,
+    "Stalled \u2014 never executed the action": 24,
+    "Escalated to human without completing": 20,
+    "Lost the thread / looped (hit step cap)": 13
+  },
+  "airline_gemini": {
+    "Acted with wrong arguments/values": 21,
+    "Escalated to human without completing": 10,
+    "Lost the thread / looped (hit step cap)": 8,
+    "Stalled \u2014 never executed the action": 2
+  }
+}
